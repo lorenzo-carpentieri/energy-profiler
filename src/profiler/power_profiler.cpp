@@ -90,7 +90,7 @@ std::string PowerProfiler::get_timestamp() const{
     return timestamp.str();
 }
 
-double PowerProfiler::get_energy() const{
+double PowerProfiler::get_device_energy() const{
     return static_cast<double>(impl_->end_dev_energy - impl_->start_dev_energy) / 1e6; // convert uj to j
 }
 

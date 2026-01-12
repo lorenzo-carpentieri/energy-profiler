@@ -53,7 +53,7 @@ int main(){
     profiler.stop();
 
 
-    std::cout<< "Total energy [j]: " << profiler.get_energy() << std::endl;
+    std::cout<< "Total energy [j]: " << profiler.get_device_energy() << std::endl;
 
     return 0;
 }

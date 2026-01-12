@@ -15,7 +15,7 @@ public:
     void stop();
 
     // double device_energy_joules() const;
-    double get_energy() const; // energy consumed by the device with device_id in joules
+    double get_device_energy() const; // energy consumed by the device with device_id in joules
 
 private:
     struct Impl;                 // opaque PIMPL
