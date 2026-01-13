@@ -2,7 +2,7 @@
 #if defined(USE_NVML)
 #include "vendor/nvml_backend.hpp"
 #elif defined(USE_ROCM)
-#include "vendor/RocmBackend.hpp"
+#include "vendor/rocm_backend.hpp"
 #elif defined(USE_LEVEL_ZERO)
 #include "vendor/LevelZeroBackend.hpp"
 #endif

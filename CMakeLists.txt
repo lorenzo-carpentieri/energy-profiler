@@ -39,6 +39,12 @@ endif()
 
 if(USE_ROCM)
     target_compile_definitions(power_profiler PRIVATE USE_ROCM)
+    list(APPEND CMAKE_PREFIX_PATH "/opt/rocm")
+    find_package(rocm_smi REQUIRED)
+
+    target_include_directories(power_profiler PRIVATE ${ROCM_SMI_INCLUDE_DIRS})
+
+    target_link_libraries(power_profiler INTERFACE ${ROCM_SMI_LIBRARIES})
 endif()
 
 if(USE_LEVEL_ZERO)
