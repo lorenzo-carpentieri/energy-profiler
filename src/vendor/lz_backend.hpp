@@ -2,12 +2,13 @@
 #include "backend/energy_backend.hpp"
 #include <level_zero/ze_api.h>
 #include <level_zero/zes_api.h>
+#include <vector>
 namespace intel {
     class LevelZeroBackend final : public EnergyBackend {
     public:
         void initialize(int dev_id) override{
             zeInit(0); 
-            device_ = get_devices(dev_id);
+            device_ = get_devices()[dev_id];
         }
         void shutdown() override{
         }
@@ -38,7 +39,7 @@ namespace intel {
             zeDriverGet(&drivers_count, nullptr);
 
             if (drivers_count < 1) {
-                throw std::runtime_error{"power_profiler: " + std::string(lz::name) + " backend error: could not get Level Zero drivers"};
+                throw std::runtime_error{"power_profiler: intel backend error: could not get Level Zero drivers"};
             }
             std::vector<ze_driver_handle_t> drivers(drivers_count);
             zeDriverGet(&drivers_count, drivers.data());

@@ -4,7 +4,7 @@
 #elif defined(USE_ROCM)
 #include "vendor/rocm_backend.hpp"
 #elif defined(USE_LEVEL_ZERO)
-#include "vendor/LevelZeroBackend.hpp"
+#include "vendor/lz_backend.hpp"
 #endif
 
 namespace backend {
