@@ -5,7 +5,7 @@ PowerProfiler implements a portable energy interface for power and energy monito
 ```
 mkdir build
 cd build
-cmake  -DUSE_{NVML/ROCM/LEVEL_ZERO}=ON ..
+cmake  -DUSE_{NVML/ROCM/LEVEL_ZERO}=ON  -DCMAKE_INSTALL_PREFIX=<path_to_install_dir>..
 make -j
 ```
 

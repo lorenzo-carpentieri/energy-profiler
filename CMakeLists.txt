@@ -51,6 +51,16 @@ if(USE_LEVEL_ZERO)
     target_compile_definitions(power_profiler PRIVATE USE_LEVEL_ZERO)
 endif()
 
+install(TARGETS power_profiler
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+)
+
+install(DIRECTORY include/
+    DESTINATION include
+)
+
+
 # ===============================
 # Tests
 # ===============================
