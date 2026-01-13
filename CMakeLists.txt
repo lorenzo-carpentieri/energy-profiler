@@ -12,6 +12,7 @@ option(USE_ROCM "Enable AMD ROCm backend" OFF)
 option(USE_LEVEL_ZERO "Enable Intel Level Zero backend" OFF)
 option(BUILD_TESTS "Compile test" OFF)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 # ===============================
 # Library
@@ -33,6 +34,7 @@ target_include_directories(power_profiler
 # Backend selection
 # ===============================
 if(USE_NVML)
+    find_package(CUDAToolkit REQUIRED)
     target_compile_definitions(power_profiler PRIVATE USE_NVML)
     target_link_libraries(power_profiler PRIVATE nvidia-ml)
 endif()
@@ -49,6 +51,8 @@ endif()
 
 if(USE_LEVEL_ZERO)
     target_compile_definitions(power_profiler PRIVATE USE_LEVEL_ZERO)
+    find_package(LevelZero REQUIRED)
+	target_link_libraries(power_profiler INTERFACE LevelZero::LevelZero)
 endif()
 
 install(TARGETS power_profiler
