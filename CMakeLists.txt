@@ -61,8 +61,8 @@ install(TARGETS power_profiler
     LIBRARY DESTINATION lib
 )
 
-install(DIRECTORY include/
-    DESTINATION include
+install(DIRECTORY "include/profiler/"
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/
 )
 
 
