@@ -36,7 +36,8 @@ target_include_directories(power_profiler
 if(USE_NVML)
     find_package(CUDAToolkit REQUIRED)
     target_compile_definitions(power_profiler PRIVATE USE_NVML)
-    target_link_libraries(power_profiler PRIVATE nvidia-ml)
+    target_link_libraries(power_profiler PRIVATE CUDA::nvml)
+
 endif()
 
 if(USE_ROCM)
