@@ -1,5 +1,7 @@
 #pragma once
 #include <cstdint>
+#include "profiler/data_types.hpp"
+
 // This is the interface used to abstract energy backends from different libraries such as NVML, ROCm SMI, Level Zero etc...
 class EnergyBackend {
 public:
@@ -9,7 +11,7 @@ public:
     // clear the backend library
     virtual void shutdown() = 0;
     // Read the current power consumption in watts
-    virtual double read_power() = 0;
+    virtual profiler::data_types::power_t read_power() = 0;
     // Read the total energy consumed in microjoules uj
-    virtual uint64_t read_energy() = 0;
+    virtual profiler::data_types::energy_t read_energy() = 0;
 };

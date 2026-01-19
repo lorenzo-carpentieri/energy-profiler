@@ -3,6 +3,7 @@
 #include <level_zero/ze_api.h>
 #include <level_zero/zes_api.h>
 #include <vector>
+#include <stdexcept>
 namespace intel {
     class LevelZeroBackend final : public EnergyBackend {
     public:
@@ -13,7 +14,7 @@ namespace intel {
         void shutdown() override{
         }
         // read current power in microwatts: level zero do not support instantaneous power reading, so we return energy instead
-        double read_power() override{
+        profiler::data_types::power_t read_power() override{
             zes_pwr_handle_t hPwr;
             zesDeviceGetCardPowerDomain(device_, &hPwr);
             zes_power_energy_counter_t counter;
@@ -21,7 +22,7 @@ namespace intel {
             return  counter.energy; // in micro watts
         }
         
-        uint64_t read_energy() override{
+        profiler::data_types::energy_t read_energy() override{
             zes_pwr_handle_t hPwr;
             zesDeviceGetCardPowerDomain(device_, &hPwr);
             zes_power_energy_counter_t counter;

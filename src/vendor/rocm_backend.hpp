@@ -26,22 +26,23 @@ namespace amd {
         void shutdown() override{
             rsmi_shut_down();
         }
+
         // read current power in microwatts
-        double read_power() override{
-            uint64_t power_uw;
+        profiler::data_types::power_t read_power() override{
+            profiler::data_types::power_t power_uw;
             rsmi_dev_power_ave_get(device_, 0, &power_uw); // microwatts
             return static_cast<double>(power_uw); // convert mW to uW
         }
         
-        uint64_t read_energy() override{
+        profiler::data_types::energy_t read_energy() override{
             unsigned long long energy_uj=0;
-            uint64_t total_energy=0;
+            profiler::data_types::energy_t total_energy=0;
             float counter_resolution=0;
             uint64_t timestamp=0;
             // TODO: add support for other AMD GPUs
             check(rsmi_dev_energy_count_get(device_, &total_energy, &counter_resolution, &timestamp), "rsmi_dev_energy_count_get"); // only works on AMD >= MI250X 
     	    std::cout << "Energy read: " << total_energy << " uj, resolution: " << counter_resolution << " uj, timestamp: " << timestamp << std::endl;
-            return static_cast<uint64_t>(total_energy * counter_resolution); // in microjoules
+            return static_cast<profiler::data_types::energy_t>(total_energy * counter_resolution); // in microjoules
         }
 
     private:
