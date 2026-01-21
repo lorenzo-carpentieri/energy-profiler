@@ -24,7 +24,7 @@ int main(){
     
     auto log_dir = get_executable_dir() / ".." / ".." / "logs"; // create logs directory relative to executable
     
-    PowerProfiler profiler(0, 10, log_dir / "power_log.txt");
+    profiler::PowerProfiler profiler(0, 10, log_dir / "power_log.txt");
     profiler.start();
     
 

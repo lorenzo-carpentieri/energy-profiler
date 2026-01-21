@@ -28,33 +28,24 @@ namespace profiler{
     };
 
     PowerProfiler::PowerProfiler(int dev_id,
-                                int sampling_rate_ms,
-                                const std::string& file)
+                                int sampling_rate_ms)
         : impl_(new Impl) {
 
         impl_->backend = backend::create_backend();
         impl_->backend->initialize(dev_id);
 
         impl_->sampling_ms = sampling_rate_ms;
-        // Create directory for log file if it doesn't exist
-        std::filesystem::path log_dir = std::filesystem::path(file).parent_path();
-        if (!std::filesystem::exists(log_dir)) {
-            std::filesystem::create_directories(log_dir);
-        }
 
-        impl_->log.open(file);
     }
 
     PowerProfiler::~PowerProfiler() {
         impl_->backend->shutdown(); // shutdown backend
-        impl_->log.close(); // close log file
         impl_.reset(); // destroy pointer to backend implementation
     }
 
     // TODO: Remove power file: timestamp and power will be stored in a vector of tuple 
     void PowerProfiler::start() {
         impl_->running = true;
-        impl_->log << "time,power"<<std::endl;
 
         impl_->start_dev_energy = impl_->backend->read_energy(); // start energy in uj
         // impl_->start_host_energy = impl_->host_energy.read_energy();
@@ -65,7 +56,6 @@ namespace profiler{
                 double power_uw = impl_->backend->read_power(); // read power in uw
                 std::tuple<std::string, double> power_tuple = std::make_tuple(timestamp, power_uw);
                 power_trace_data.push_back(power_tuple); // Create (timestamp, power) tuple
-                impl_->log << timestamp << "," << power_uw * 1e-6 << std::endl; // log timestamp and power in Watts
                 std::this_thread::sleep_for(std::chrono::milliseconds(impl_->sampling_ms));
             }
         });

@@ -10,8 +10,7 @@ namespace profiler{
     class PowerProfiler {
         public:
             PowerProfiler(int device_id,
-                        int sampling_rate_ms,
-                        const std::string& output_file);
+                        int sampling_rate_ms);
 
             ~PowerProfiler();
 
