@@ -11,14 +11,14 @@ namespace profiler{
         inline std::string power_trace_to_string(const power_trace_t& trace)
         {
             std::ostringstream oss;
-            oss << "[";
+            oss << "\"[";
 
             for (std::size_t i = 0; i < trace.size(); ++i) {
                 const auto& [timestamp, power] = trace[i];
-                oss << "(" << timestamp << "," << power << ")";
+                oss << "(" << timestamp << ";" << power << ")";
             }
 
-            oss << "]";
+            oss << "]\"";
             return oss.str();
         }
     }
