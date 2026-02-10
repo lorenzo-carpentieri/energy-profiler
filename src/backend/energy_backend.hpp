@@ -7,7 +7,7 @@ class EnergyBackend {
 public:
     virtual ~EnergyBackend() = default;
     // initialize the backend library
-    virtual void initialize(int device_id) = 0;
+    virtual void initialize(uint32_t device_id) = 0;
     // clear the backend library
     virtual void shutdown() = 0;
     // Read the current power consumption in watts

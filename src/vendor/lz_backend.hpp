@@ -7,7 +7,7 @@
 namespace intel {
     class LevelZeroBackend final : public EnergyBackend {
     public:
-        void initialize(int dev_id) override{
+        void initialize(uint32_t dev_id) override{
             zeInit(0); 
             device_ = get_devices()[dev_id];
         }

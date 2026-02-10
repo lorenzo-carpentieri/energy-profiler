@@ -6,7 +6,7 @@ namespace profiler{
     namespace data_types{
         using energy_t = uint64_t;
         using power_t = uint64_t;
-        using timestamp_t = std::string;
+        using timestamp_t = uint64_t;
         using power_trace_t = std::vector<std::tuple<timestamp_t, power_t>>;
         inline std::string power_trace_to_string(const power_trace_t& trace)
         {

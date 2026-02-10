@@ -5,7 +5,7 @@
 namespace nvidia {
     class NvmlBackend final : public EnergyBackend {
     public:
-        void initialize(int dev_id) override{
+        void initialize(uint32_t  dev_id) override{
             nvmlInit();
             nvmlDeviceGetHandleByIndex(dev_id, &device_);
         }

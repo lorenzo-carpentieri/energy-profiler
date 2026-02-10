@@ -25,5 +25,6 @@ namespace profiler{
             std::unique_ptr<Impl> impl_;                 // std::unique_ptr<Impl>
             data_types::timestamp_t get_timestamp() const;
             data_types::power_trace_t power_trace_data;
+            data_types::energy_t compute_energy(const data_types::power_trace_t& trace) const;
     };
 }

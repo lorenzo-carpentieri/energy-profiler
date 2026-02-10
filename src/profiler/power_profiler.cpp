@@ -27,12 +27,12 @@ namespace profiler{
         std::ofstream log;
     };
 
-    PowerProfiler::PowerProfiler(int dev_id,
+    PowerProfiler::PowerProfiler(int  dev_id,
                                 int sampling_rate_ms)
         : impl_(new Impl) {
 
         impl_->backend = backend::create_backend();
-        impl_->backend->initialize(dev_id);
+        impl_->backend->initialize(static_cast<uint32_t>(dev_id));
 
         impl_->sampling_ms = sampling_rate_ms;
 
@@ -49,14 +49,14 @@ namespace profiler{
 
         impl_->start_dev_energy = impl_->backend->read_energy(); // start energy in uj
         // impl_->start_host_energy = impl_->host_energy.read_energy();
-
         impl_->worker = std::thread([this]() {
+            uint64_t timestamp=0;
             while (impl_->running) {
-                std::string timestamp = get_timestamp();
-                double power_uw = impl_->backend->read_power(); // read power in uw
-                std::tuple<std::string, double> power_tuple = std::make_tuple(timestamp, power_uw);
+                data_types::power_t power_uw = impl_->backend->read_power(); // read power in uw
+                std::tuple<data_types::timestamp_t, data_types::power_t> power_tuple = std::make_tuple(timestamp, power_uw);
                 power_trace_data.push_back(power_tuple); // Create (timestamp, power) tuple
                 std::this_thread::sleep_for(std::chrono::milliseconds(impl_->sampling_ms));
+                timestamp+=impl_->sampling_ms;
             }
         });
     }
@@ -66,26 +66,24 @@ namespace profiler{
         if (impl_->worker.joinable()) {
             impl_->worker.join();
         }
-
+       
         impl_->end_dev_energy = impl_->backend->read_energy(); // end energy in uj
         // // impl_->end_host_energy = impl_->host_energy.read_energy();
     } 
 
-    data_types::timestamp_t PowerProfiler::get_timestamp() const{
-        auto now = std::chrono::system_clock::now();
-        std::time_t now_c = std::chrono::system_clock::to_time_t(now);
-        std::tm local_time = *std::localtime(&now_c);
-        auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+    // data_types::timestamp_t PowerProfiler::get_timestamp() const{
+    //     auto now = std::chrono::system_clock::now();
+    //     std::time_t now_c = std::chrono::system_clock::to_time_t(now);
+    //     std::tm local_time = *std::localtime(&now_c);
+    //     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
 
-        std::ostringstream timestamp;
-        timestamp << std::put_time(&local_time, "%H:%M:%S")
-                    << ":" << std::setfill('0') << std::setw(3) << ms.count();
-        return timestamp.str();
-    }
+    //     std::ostringstream timestamp;
+    //     timestamp << std::put_time(&local_time, "%H:%M:%S")
+    //                 << ":" << std::setfill('0') << std::setw(3) << ms.count();
+    //     return timestamp.str();
+    // }
 
-    data_types::energy_t PowerProfiler::get_device_energy() const{
-        return impl_->end_dev_energy - impl_->start_dev_energy; // uj
-    }
+    
 
     data_types::power_trace_t PowerProfiler::get_power_execution_data() const{
         // Parse the tuple vector in order to remove consecutive power value that are equal.
@@ -102,5 +100,31 @@ namespace profiler{
         );
         return parsed_data;
 
+    }
+
+    data_types::energy_t  PowerProfiler::compute_energy(const data_types::power_trace_t& trace) const {
+        if (trace.size() < 2)
+            return 0;
+
+        data_types::energy_t energy = 0;
+
+        for (size_t i = 0; i + 1 < trace.size(); ++i)
+        {
+            uint64_t p = static_cast<uint64_t>(std::get<1>(trace[i]));
+
+            data_types::energy_t dt = impl_->sampling_ms;      // seconds
+            energy += p * dt;         // Joules
+        }
+
+        return energy;
+    }
+
+
+    data_types::energy_t PowerProfiler::get_device_energy() const{
+        #if defined(USE_ROCM)
+            return PowerProfiler::compute_energy(power_trace_data);
+        #else
+            return impl_->end_dev_energy - impl_->start_dev_energy; // uj
+        #endif
     }
 }
