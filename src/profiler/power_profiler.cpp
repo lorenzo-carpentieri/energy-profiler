@@ -102,29 +102,27 @@ namespace profiler{
 
     }
 
-    data_types::energy_t  PowerProfiler::compute_energy(const data_types::power_trace_t& trace) const {
-        if (trace.size() < 2)
-            return 0;
+    /* This funciton can be used when the GPU does not have energy counter but you can only profile the power trace */
+    // This function compute the energy consumed by the device according to the power trace.
+    // data_types::energy_t  PowerProfiler::compute_energy(const data_types::power_trace_t& trace) const {
+    //     if (trace.size() < 2)
+    //         return 0;
 
-        data_types::energy_t energy = 0;
+    //     data_types::energy_t energy = 0;
 
-        for (size_t i = 0; i + 1 < trace.size(); ++i)
-        {
-            uint64_t p = static_cast<uint64_t>(std::get<1>(trace[i]));
+    //     for (size_t i = 0; i + 1 < trace.size(); ++i)
+    //     {
+    //         uint64_t p = static_cast<uint64_t>(std::get<1>(trace[i]));
 
-            data_types::energy_t dt = impl_->sampling_ms;      // seconds
-            energy += p * dt;         // Joules
-        }
+    //         data_types::energy_t dt = impl_->sampling_ms;      // seconds
+    //         energy += p * dt;         // Joules
+    //     }
 
-        return energy;
-    }
+    //     return energy;
+    // }
 
 
     data_types::energy_t PowerProfiler::get_device_energy() const{
-        #if defined(USE_ROCM)
-            return PowerProfiler::compute_energy(power_trace_data);
-        #else
-            return impl_->end_dev_energy - impl_->start_dev_energy; // uj
-        #endif
+        return impl_->end_dev_energy - impl_->start_dev_energy; // uj
     }
 }

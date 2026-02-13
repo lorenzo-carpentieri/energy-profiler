@@ -20,42 +20,65 @@ namespace amd {
     class RocmBackend final : public EnergyBackend {
     public:
         void initialize(uint32_t  dev_id) override{
+
             rsmi_init(RSMI_INIT_FLAG_ALL_GPUS);
-            rsmi_dev_id_get(dev_id, &device_);		
+            device_ = dev_id;
+            // rsmi_dev_pci_id_get(dev_id, &device_);		
+            // std::cerr << "Device id: "  << dev_id << " PCI dev id: " << device_ <<std::endl;
         }
         void shutdown() override{
             rsmi_shut_down();
         }
 
-        // read current power in microwatts
-        profiler::data_types::power_t read_power() override{
-            profiler::data_types::power_t power_uw;
-            uint32_t sensor_id=0;
-            rsmi_dev_power_ave_get(static_cast<uint32_t>(device_), sensor_id, &power_uw); // microwatts
+                // read current power in microwatts for primary die only
+        profiler::data_types::power_t read_power() override {
+            // If the current device is a secondary die (odd index), return 0
+            if (device_ % 2 != 0) {
+                // Optional: log once that secondary dies are skipped
+                // std::cerr << "Device " << device_ << " is a secondary die, skipping power read." << std::endl;
+                return 0;
+            }
 
-            return power_uw; // convert mW to uW
+            profiler::data_types::power_t power_uw = 0;
+            RSMI_POWER_TYPE power_type = RSMI_INVALID_POWER;
+
+            rsmi_status_t ret =
+                rsmi_dev_power_get(
+                    static_cast<uint32_t>(device_),
+                    &power_uw,
+                    &power_type);
+
+            if (ret != RSMI_STATUS_SUCCESS) {
+                const char* status_string = nullptr;
+                rsmi_status_string(ret, &status_string);
+
+                std::cerr << "Power query failed for device " << device_ << ": "
+                        << (status_string ? status_string : "Unknown error")
+                        << std::endl;
+                return 0;
+            }
+
+            return power_uw; // already in microwatts
         }
         
         profiler::data_types::energy_t read_energy() override{
-            // profiler::data_types::energy_t total_energy=0;
-            // float counter_resolution=0;
-            // uint64_t timestamp=0;
-            // // TODO: add support for other AMD GPUs
-            // std::cerr << " Start Reading energy"<<std::endl;
-            // check(rsmi_dev_energy_count_get(static_cast<uint32_t>(device_), &total_energy, &counter_resolution, &timestamp), "rsmi_dev_energy_count_get"); // only works on AMD >= MI250X 
-            // std::cerr << " End Reading energy"<<std::endl;
+            if (device_ % 2 != 0) {
+                // Optional: log once that secondary dies are skipped
+                // std::cerr << "Device " << device_ << " is a secondary die, skipping power read." << std::endl;
+                return 0;
+            }
+            profiler::data_types::energy_t total_energy=0;
+            float counter_resolution=0; // the energy coounter incremente in steps of minimum 15.3 uj
+            uint64_t timestamp=0; 
+            // TODO: add support for other AMD GPUs
+            check(rsmi_dev_energy_count_get(static_cast<uint32_t>(device_), &total_energy, &counter_resolution, &timestamp), "rsmi_dev_energy_count_get"); // only works on AMD >= MI250X 
     	    
-            // std::cout << "Energy read: " << total_energy << " uj, resolution: " << counter_resolution << " uj, timestamp: " << timestamp << std::endl;
-            // return static_cast<profiler::data_types::energy_t>(total_energy * counter_resolution); // in microjoules
-            profiler::data_types::power_t power_uw;
-            uint32_t sensor_id=0;
-            rsmi_dev_power_ave_get(static_cast<uint32_t>(device_), sensor_id, &power_uw); // microwatts
-
-            return power_uw; // convert mW to uW
+            // std::cerr << "Energy read: " << total_energy << " uj, resolution: " << counter_resolution << " uj, timestamp: " << timestamp << std::endl;
+            return static_cast<profiler::data_types::energy_t>(total_energy); // in microjoules
         }
 
     private:
-        uint16_t  device_;
+        uint32_t  device_;
 
     };
 } // namespace nvidia
