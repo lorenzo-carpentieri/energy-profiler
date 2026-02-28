@@ -20,9 +20,9 @@ namespace nvidia {
         }
         
          profiler::data_types::energy_t read_energy() override{
-            unsigned long long energy_uj;
-            nvmlDeviceGetTotalEnergyConsumption(device_, &energy_uj);
-            return static_cast<uint64_t>(energy_uj); // in microjoules
+            unsigned long long energy_mj;
+            nvmlDeviceGetTotalEnergyConsumption(device_, &energy_mj);
+            return static_cast<uint64_t>(energy_mj / 1000); // mj to microjoules
         }
 
     private:
