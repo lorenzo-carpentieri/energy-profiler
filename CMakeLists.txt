@@ -10,6 +10,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(USE_NVML "Enable NVIDIA NVML backend" OFF)
 option(USE_ROCM "Enable AMD ROCm backend" OFF)
 option(USE_LEVEL_ZERO "Enable Intel Level Zero backend" OFF)
+option(USE_RAPL "Enable CPU RAPL backend" ON)
+
 option(BUILD_TESTS "Compile test" OFF)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
@@ -54,6 +56,11 @@ if(USE_LEVEL_ZERO)
     target_compile_definitions(power_profiler PRIVATE USE_LEVEL_ZERO)
     find_package(LevelZero REQUIRED)
 	target_link_libraries(power_profiler INTERFACE LevelZero::LevelZero)
+endif()
+
+
+if(USE_RAPL)
+    target_compile_definitions(power_profiler PRIVATE USE_RAPL)
 endif()
 
 install(TARGETS power_profiler

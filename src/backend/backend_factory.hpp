@@ -1,6 +1,12 @@
 #pragma once
 #include <memory>
-#include "energy_backend.hpp"
-namespace backend {
-    std::unique_ptr<EnergyBackend> create_backend();
+#include "gpu_energy_backend.hpp"
+#include "cpu_energy_backend.hpp"
+
+namespace gpu_backend {
+    std::unique_ptr<GPUEnergyBackend> create_backend();
+}
+
+namespace cpu_backend {
+    std::unique_ptr<CPUEnergyBackend> create_backend();
 }

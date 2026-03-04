@@ -1,5 +1,6 @@
 #include "profiler/power_profiler.hpp"
-#include "backend/energy_backend.hpp"
+#include "backend/gpu_energy_backend.hpp"
+#include "backend/cpu_energy_backend.hpp"
 #include "backend/backend_factory.hpp"
 #include <thread>
 #include <atomic>
@@ -11,7 +12,8 @@
 
 namespace profiler{
     struct PowerProfiler::Impl {
-        std::unique_ptr<EnergyBackend> backend;
+        std::unique_ptr<GPUEnergyBackend> gpu_backend;
+        std::unique_ptr<CPUEnergyBackend> cpu_backend;
         // PowercapReader host_energy;
 
         std::atomic<bool> running{false};
@@ -27,32 +29,35 @@ namespace profiler{
         std::ofstream log;
     };
 
-    PowerProfiler::PowerProfiler(int  dev_id,
+    PowerProfiler::PowerProfiler(int  dev_id, int host_id,
                                 int sampling_rate_ms)
         : impl_(new Impl) {
 
-        impl_->backend = backend::create_backend();
-        impl_->backend->initialize(static_cast<uint32_t>(dev_id));
-
+        impl_->gpu_backend = gpu_backend::create_backend();
+        impl_->cpu_backend = cpu_backend::create_backend();
+        impl_->gpu_backend->initialize(static_cast<uint32_t>(dev_id));
+        impl_->cpu_backend->initialize(static_cast<uint32_t>(host_id));
         impl_->sampling_ms = sampling_rate_ms;
 
     }
 
     PowerProfiler::~PowerProfiler() {
-        impl_->backend->shutdown(); // shutdown backend
-        impl_.reset(); // destroy pointer to backend implementation
+        impl_->gpu_backend->shutdown(); // shutdown gpu_backend
+        impl_->cpu_backend->shutdown(); // shutdown gpu_backend
+
+        impl_.reset(); // destroy pointer to gpu_backend implementation
     }
 
     // TODO: Remove power file: timestamp and power will be stored in a vector of tuple 
     void PowerProfiler::start() {
         impl_->running = true;
 
-        impl_->start_dev_energy = impl_->backend->read_energy(); // start energy in uj
-        // impl_->start_host_energy = impl_->host_energy.read_energy();
+        impl_->start_dev_energy = impl_->gpu_backend->read_energy(); // start energy in uj
+        impl_->start_host_energy = impl_->cpu_backend->read_energy();
         impl_->worker = std::thread([this]() {
             uint64_t timestamp=0;
             while (impl_->running) {
-                data_types::power_t power_uw = impl_->backend->read_power(); // read power in uw
+                data_types::power_t power_uw = impl_->gpu_backend->read_power(); // read power in uw
                 std::tuple<data_types::timestamp_t, data_types::power_t> power_tuple = std::make_tuple(timestamp, power_uw);
                 power_trace_data.push_back(power_tuple); // Create (timestamp, power) tuple
                 std::this_thread::sleep_for(std::chrono::milliseconds(impl_->sampling_ms));
@@ -66,16 +71,17 @@ namespace profiler{
         if (impl_->worker.joinable()) {
             impl_->worker.join();
         }
+        impl_->end_host_energy = impl_->cpu_backend->read_energy(); 
+        impl_->end_dev_energy = impl_->gpu_backend->read_energy(); // end energy in uj
        
-        impl_->end_dev_energy = impl_->backend->read_energy(); // end energy in uj
-        
-        double dt = static_cast<double>(std::get<0>(power_trace_data[1]) - std::get<0>(power_trace_data[0])) / 1000; // time interval between two consecutive power samples in ms 
-        for (size_t i = 0; i < power_trace_data.size(); ++i){
-            double p = std::get<1>(power_trace_data[i]);
+        /* AMD energy profiling */
+        // double dt = static_cast<double>(std::get<0>(power_trace_data[1]) - std::get<0>(power_trace_data[0])) / 1000; // time interval between two consecutive power samples in ms 
+        // for (size_t i = 0; i < power_trace_data.size(); ++i){
+        //     double p = std::get<1>(power_trace_data[i]);
 
-            impl_->total_energy_uj += p * dt; // energy in uj
-        }
-        // // impl_->end_host_energy = impl_->host_energy.read_energy();
+        //     impl_->total_energy_uj += p * dt; // energy in uj
+        // }
+        /********************/
     } 
 
     // data_types::timestamp_t PowerProfiler::get_timestamp() const{
@@ -132,7 +138,12 @@ namespace profiler{
 
 
     data_types::energy_t PowerProfiler::get_device_energy() const{
-        // return impl_->end_dev_energy - impl_->start_dev_energy; // uj
-        return impl_->total_energy_uj; // uj
+        return impl_->end_dev_energy - impl_->start_dev_energy; // uj
+        // return impl_->total_energy_uj; // uj
+    }
+
+    data_types::energy_t PowerProfiler::get_host_energy() const{
+        return impl_->end_host_energy - impl_->start_host_energy; // uj
+        // return impl_->total_energy_uj; // uj
     }
 }

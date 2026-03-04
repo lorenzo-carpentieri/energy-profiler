@@ -9,7 +9,7 @@
 namespace profiler{
     class PowerProfiler {
         public:
-            PowerProfiler(int device_id,
+            PowerProfiler(int device_id, int host_id,
                         int sampling_rate_ms);
 
             ~PowerProfiler();
@@ -18,6 +18,8 @@ namespace profiler{
             void stop();
 
             data_types::energy_t get_device_energy() const; // energy consumed by the device with device_id in uj
+            data_types::energy_t get_host_energy() const; // energy consumed by the host in uj
+
             data_types::power_trace_t get_power_execution_data() const;  // return an std::vector containing the tuple (timestamp, power)
         
         private:

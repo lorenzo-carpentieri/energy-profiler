@@ -6,15 +6,29 @@
 #elif defined(USE_LEVEL_ZERO)
 #include "vendor/lz_backend.hpp"
 #endif
+#if defined(USE_RAPL)
+#include "vendor/rapl_backend.hpp"
+#endif
 
-namespace backend {
-    std::unique_ptr<EnergyBackend> create_backend() {
+namespace gpu_backend {
+    std::unique_ptr<GPUEnergyBackend> create_backend() {
     #if defined(USE_NVML)
         return std::make_unique<nvidia::NvmlBackend>();
     #elif defined(USE_ROCM)
         return std::make_unique<amd::RocmBackend>();
     #elif defined(USE_LEVEL_ZERO)
         return std::make_unique<intel::LevelZeroBackend>();
+    #else
+    #error "No backend defined"
+    #endif
+    }
+}
+
+
+namespace cpu_backend {
+    std::unique_ptr<CPUEnergyBackend> create_backend() {
+    #if defined(USE_RAPL)
+        return std::make_unique<rapl::RAPLBackend>();
     #else
     #error "No backend defined"
     #endif

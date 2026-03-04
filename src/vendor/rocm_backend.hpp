@@ -1,5 +1,5 @@
 #pragma once
-#include "backend/energy_backend.hpp"
+#include "backend/gpu_energy_backend.hpp"
 #include <rocm_smi/rocm_smi.h>
 #include <iostream>
 
@@ -17,7 +17,7 @@ namespace amd {
     }
 
 
-    class RocmBackend final : public EnergyBackend {
+    class RocmBackend final : public GPUEnergyBackend {
     public:
         void initialize(uint32_t  dev_id) override{
 

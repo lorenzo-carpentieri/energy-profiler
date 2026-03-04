@@ -1,9 +1,9 @@
 #pragma once
-#include "backend/energy_backend.hpp"
+#include "backend/gpu_energy_backend.hpp"
 #include <nvml.h>
 
 namespace nvidia {
-    class NvmlBackend final : public EnergyBackend {
+    class NvmlBackend final : public GPUEnergyBackend {
     public:
         void initialize(uint32_t  dev_id) override{
             nvmlInit();

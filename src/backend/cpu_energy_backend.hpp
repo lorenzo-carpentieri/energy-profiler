@@ -3,9 +3,9 @@
 #include "profiler/data_types.hpp"
 
 // This is the interface used to abstract energy backends from different libraries such as NVML, ROCm SMI, Level Zero etc...
-class EnergyBackend {
+class CPUEnergyBackend {
 public:
-    virtual ~EnergyBackend() = default;
+    virtual ~CPUEnergyBackend() = default;
     // initialize the backend library
     virtual void initialize(uint32_t device_id) = 0;
     // clear the backend library

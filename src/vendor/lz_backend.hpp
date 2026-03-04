@@ -1,11 +1,11 @@
 #pragma once
-#include "backend/energy_backend.hpp"
+#include "backend/gpu_energy_backend.hpp"
 #include <level_zero/ze_api.h>
 #include <level_zero/zes_api.h>
 #include <vector>
 #include <stdexcept>
 namespace intel {
-    class LevelZeroBackend final : public EnergyBackend {
+    class LevelZeroBackend final : public GPUEnergyBackend {
     public:
         void initialize(uint32_t dev_id) override{
             zeInit(0); 
