@@ -34,17 +34,22 @@ namespace profiler{
         : impl_(new Impl) {
 
         impl_->gpu_backend = gpu_backend::create_backend();
+        #if defined(USE_RAPL)
         impl_->cpu_backend = cpu_backend::create_backend();
+        #endif
         impl_->gpu_backend->initialize(static_cast<uint32_t>(dev_id));
+        #if defined(USE_RAPL)
         impl_->cpu_backend->initialize(static_cast<uint32_t>(host_id));
+        #endif
         impl_->sampling_ms = sampling_rate_ms;
 
     }
 
     PowerProfiler::~PowerProfiler() {
         impl_->gpu_backend->shutdown(); // shutdown gpu_backend
+        #if defined(USE_RAPL)
         impl_->cpu_backend->shutdown(); // shutdown gpu_backend
-
+        #endif
         impl_.reset(); // destroy pointer to gpu_backend implementation
     }
 
@@ -53,7 +58,9 @@ namespace profiler{
         impl_->running = true;
 
         impl_->start_dev_energy = impl_->gpu_backend->read_energy(); // start energy in uj
+        #if defined(USE_RAPL)
         impl_->start_host_energy = impl_->cpu_backend->read_energy();
+        #endif
         impl_->worker = std::thread([this]() {
             uint64_t timestamp=0;
             while (impl_->running) {
@@ -71,7 +78,9 @@ namespace profiler{
         if (impl_->worker.joinable()) {
             impl_->worker.join();
         }
+        #if defined(USE_RAPL)
         impl_->end_host_energy = impl_->cpu_backend->read_energy(); 
+        #endif
         impl_->end_dev_energy = impl_->gpu_backend->read_energy(); // end energy in uj
        
         /* AMD energy profiling */

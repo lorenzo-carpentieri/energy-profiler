@@ -19,7 +19,7 @@ namespace gpu_backend {
     #elif defined(USE_LEVEL_ZERO)
         return std::make_unique<intel::LevelZeroBackend>();
     #else
-    #error "No backend defined"
+    #error "No GPU energy backend defined"
     #endif
     }
 }
@@ -30,7 +30,7 @@ namespace cpu_backend {
     #if defined(USE_RAPL)
         return std::make_unique<rapl::RAPLBackend>();
     #else
-    #error "No backend defined"
+    #warning "No CPU energy backend defined"
     #endif
     }
 }
