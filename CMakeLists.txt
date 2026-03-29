@@ -35,10 +35,12 @@ target_include_directories(power_profiler
 # ===============================
 # Backend selection
 # ===============================
+find_package(Threads REQUIRED)
+
 if(USE_NVML)
     find_package(CUDAToolkit REQUIRED)
     target_compile_definitions(power_profiler PRIVATE USE_NVML)
-    target_link_libraries(power_profiler PRIVATE CUDA::nvml)
+    target_link_libraries(power_profiler PRIVATE CUDA::nvml Threads::Threads)
 
 endif()
 
@@ -49,13 +51,13 @@ if(USE_ROCM)
 
     target_include_directories(power_profiler PRIVATE ${ROCM_SMI_INCLUDE_DIRS})
 
-    target_link_libraries(power_profiler INTERFACE ${ROCM_SMI_LIBRARIES})
+    target_link_libraries(power_profiler INTERFACE ${ROCM_SMI_LIBRARIES} Threads::Threads)
 endif()
 
 if(USE_LEVEL_ZERO)
     target_compile_definitions(power_profiler PRIVATE USE_LEVEL_ZERO)
     find_package(LevelZero REQUIRED)
-	target_link_libraries(power_profiler INTERFACE LevelZero::LevelZero)
+	target_link_libraries(power_profiler INTERFACE LevelZero::LevelZero Threads::Threads)
 endif()
 
 
