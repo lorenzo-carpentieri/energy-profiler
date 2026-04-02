@@ -10,16 +10,27 @@ namespace intel {
         void initialize(uint32_t dev_id) override{
             zeInit(0); 
             device_ = get_devices()[dev_id];
-        }
+            // Add a first energy value into energy trace so that the first read_power is not 0
+            zes_pwr_handle_t hPwr;
+            zesDeviceGetCardPowerDomain(device_, &hPwr);
+            zes_power_energy_counter_t counter;
+            zesPowerGetEnergyCounter(hPwr, &counter);
+            energy_time_trace.push_back(counter);
+        }   
         void shutdown() override{
         }
-        // read current power in microwatts: level zero do not support instantaneous power reading, so we return energy instead
+        // read current power in microwatts: level zero do not support instantaneous power reading but the power can be calculated as energy difference between two consecutive energy readings divided by the time interval between them. In this way we can have an estimation of the power consumption in the interval of time between two consecutive energy readings.
         profiler::data_types::power_t read_power() override{
             zes_pwr_handle_t hPwr;
             zesDeviceGetCardPowerDomain(device_, &hPwr);
             zes_power_energy_counter_t counter;
             zesPowerGetEnergyCounter(hPwr, &counter);
-            return  counter.energy; // in micro watts
+            energy_time_trace.push_back(counter);        
+            auto& last = energy_time_trace[energy_time_trace.size() - 1];
+            auto& prev = energy_time_trace[energy_time_trace.size() - 2];
+            double dt = static_cast<double>(last.timestamp - prev.timestamp); // time interval between two consecutive energy samples in ms 
+            double p = static_cast<double>(last.energy - prev.energy) / dt; // power in Watts
+            return static_cast<profiler::data_types::power_t>(p*1e+6);
         }
         
         profiler::data_types::energy_t read_energy() override{
@@ -32,6 +43,7 @@ namespace intel {
 
     private:
         ze_device_handle_t device_;
+        std::vector<zes_power_energy_counter_t> energy_time_trace;
 
         // Helper function to get all Level Zero devices associated to Leve Zero drivers
         // TODO: check if this works correctly with multiple drivers installed 

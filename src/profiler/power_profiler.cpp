@@ -112,8 +112,8 @@ namespace profiler{
         // In this way the tuple (t1, p1) and (t2, p2) will have p1 != p2 and in the interval of time [t1, t2] the device operate at power p1.
         data_types::power_trace_t parsed_data;
         std::tuple<data_types::timestamp_t, data_types::power_t> last_power_tuple = power_trace_data.back(); // store the power trace data internally in the power_prof object
-      
-
+        
+        
         std::unique_copy(
             power_trace_data.begin(),
             power_trace_data.end(),
