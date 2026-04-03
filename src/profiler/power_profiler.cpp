@@ -65,8 +65,15 @@ namespace profiler{
             uint64_t timestamp=0;
             while (impl_->running) {
                 data_types::power_t power_uw = impl_->gpu_backend->read_power(); // read power in uw
+                #if defined(USE_RAPL)
+                data_types::power_t host_power_uw = impl_->cpu_backend->read_power(); // read host power in uw
+                #endif
                 std::tuple<data_types::timestamp_t, data_types::power_t> power_tuple = std::make_tuple(timestamp, power_uw);
                 power_trace_data.push_back(power_tuple); // Create (timestamp, power) tuple
+                #if defined(USE_RAPL)
+                std::tuple<data_types::timestamp_t, data_types::power_t> host_power_tuple = std::make_tuple(timestamp, host_power_uw);
+                host_power_trace.push_back(host_power_tuple); // Create (timestamp, host power) tuple
+                #endif
                 std::this_thread::sleep_for(std::chrono::milliseconds(impl_->sampling_ms));
                 timestamp+=impl_->sampling_ms;
             }
@@ -117,6 +124,25 @@ namespace profiler{
         std::unique_copy(
             power_trace_data.begin(),
             power_trace_data.end(),
+            std::back_inserter(parsed_data),
+            [](const auto& a, const auto& b) { // compare prev element with current one
+                return std::get<1>(a) == std::get<1>(b);
+            }
+        );
+        parsed_data.push_back(last_power_tuple); // add the last tuple to the parsed data, in order to have the correct end timestamp of the power trace
+        return parsed_data;
+    }
+
+     data_types::power_trace_t PowerProfiler::get_host_power_trace() const{
+        // Parse the tuple vector in order to remove consecutive power value that are equal.
+        // In this way the tuple (t1, p1) and (t2, p2) will have p1 != p2 and in the interval of time [t1, t2] the device operate at power p1.
+        data_types::power_trace_t parsed_data;
+        std::tuple<data_types::timestamp_t, data_types::power_t> last_power_tuple = host_power_trace.back(); // store the power trace data internally in the power_prof object
+        
+        
+        std::unique_copy(
+            host_power_trace.begin(),
+            host_power_trace.end(),
             std::back_inserter(parsed_data),
             [](const auto& a, const auto& b) { // compare prev element with current one
                 return std::get<1>(a) == std::get<1>(b);
