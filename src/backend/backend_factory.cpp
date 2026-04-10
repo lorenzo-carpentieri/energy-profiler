@@ -5,7 +5,10 @@
 #include "vendor/rocm_backend.hpp"
 #elif defined(USE_LEVEL_ZERO)
 #include "vendor/lz_backend.hpp"
+#elif defined(USE_GEOPM)
+#include "vendor/geopm_backend.hpp"
 #endif
+
 #if defined(USE_RAPL)
 #include "vendor/rapl_backend.hpp"
 #endif
@@ -18,6 +21,8 @@ namespace gpu_backend {
         return std::make_unique<amd::RocmBackend>();
     #elif defined(USE_LEVEL_ZERO)
         return std::make_unique<intel::LevelZeroBackend>();
+    #elif defined(USE_GEOPM)
+        return std::make_unique<geopm_backend::GEOPMBackend>();
     #else
     #error "No GPU energy backend defined"
     #endif
