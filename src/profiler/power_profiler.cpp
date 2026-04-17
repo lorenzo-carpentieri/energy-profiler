@@ -34,7 +34,7 @@ namespace profiler{
         : impl_(new Impl) {
 
         impl_->gpu_backend = gpu_backend::create_backend();
-        #if defined(USE_RAPL)
+        #if defined(USE_RAPL) || defined(USE_GEOPM)
         impl_->cpu_backend = cpu_backend::create_backend();
         #endif
         impl_->gpu_backend->initialize(static_cast<uint32_t>(dev_id));
@@ -47,7 +47,7 @@ namespace profiler{
 
     PowerProfiler::~PowerProfiler() {
         impl_->gpu_backend->shutdown(); // shutdown gpu_backend
-        #if defined(USE_RAPL)
+        #if defined(USE_RAPL) || defined(USE_GEOPM)
         impl_->cpu_backend->shutdown(); // shutdown gpu_backend
         #endif
         impl_.reset(); // destroy pointer to gpu_backend implementation
@@ -58,19 +58,19 @@ namespace profiler{
         impl_->running = true;
 
         impl_->start_dev_energy = impl_->gpu_backend->read_energy(); // start energy in uj
-        #if defined(USE_RAPL)
+        #if defined(USE_RAPL) || defined(USE_GEOPM)
         impl_->start_host_energy = impl_->cpu_backend->read_energy();
         #endif
         impl_->worker = std::thread([this]() {
             uint64_t timestamp=0;
             while (impl_->running) {
                 data_types::power_t power_uw = impl_->gpu_backend->read_power(); // read power in uw
-                #if defined(USE_RAPL)
+                #if defined(USE_RAPL) || defined(USE_GEOPM)
                 data_types::power_t host_power_uw = impl_->cpu_backend->read_power(); // read host power in uw
                 #endif
                 std::tuple<data_types::timestamp_t, data_types::power_t> power_tuple = std::make_tuple(timestamp, power_uw);
                 power_trace_data.push_back(power_tuple); // Create (timestamp, power) tuple
-                #if defined(USE_RAPL)
+                #if defined(USE_RAPL) || defined(USE_GEOPM)
                 std::tuple<data_types::timestamp_t, data_types::power_t> host_power_tuple = std::make_tuple(timestamp, host_power_uw);
                 host_power_trace.push_back(host_power_tuple); // Create (timestamp, host power) tuple
                 #endif
@@ -85,7 +85,7 @@ namespace profiler{
         if (impl_->worker.joinable()) {
             impl_->worker.join();
         }
-        #if defined(USE_RAPL)
+        #if defined(USE_RAPL) || defined(USE_GEOPM)
         impl_->end_host_energy = impl_->cpu_backend->read_energy(); 
         #endif
         impl_->end_dev_energy = impl_->gpu_backend->read_energy(); // end energy in uj
