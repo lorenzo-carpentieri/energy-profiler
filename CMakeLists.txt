@@ -10,7 +10,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(USE_NVML "Enable NVIDIA NVML backend" OFF)
 option(USE_ROCM "Enable AMD ROCm backend" OFF)
 option(USE_LEVEL_ZERO "Enable Intel Level Zero backend" OFF)
-option(USE_GEOPM "Enable GEOM backend" OFF)
+option(USE_GEOPM_GPU "Enable GEOPM CPU backend" OFF)
+option(USE_GEOPM_CPU"Enable GEOPM GPU backend" OFF)
+
 option(USE_RAPL "Enable CPU RAPL backend" ON)
 
 option(BUILD_TESTS "Compile test" OFF)
@@ -20,7 +22,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 # ===============================
 # Library
 # ===============================
-add_library(power_profiler STATIC
+add_library(power_profiler SHARED
     src/profiler/power_profiler.cpp
     src/backend/backend_factory.cpp
 )
@@ -61,9 +63,17 @@ if(USE_LEVEL_ZERO)
 	target_link_libraries(power_profiler INTERFACE LevelZero::LevelZero Threads::Threads)
 endif()
 
-if(USE_GEOPM)
-    target_compile_definitions(power_profiler PRIVATE USE_GEOPM)
-    target_link_libraries(power_profiler INTERFACE geopmd)
+if(USE_GEOPM_CPU OR USE_GEOPM_GPU)
+    target_link_libraries(power_profiler INTERFACE geopmd)  
+    
+    if(USE_GEOPM_CPU)
+        target_compile_definitions(power_profiler PRIVATE USE_GEOPM_CPU)
+    endif()
+    
+    if(USE_GEOPM_GPU)
+        target_compile_definitions(power_profiler PRIVATE USE_GEOPM_GPU)
+    endif()
+    
 endif()
 
 

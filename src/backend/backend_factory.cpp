@@ -5,13 +5,16 @@
 #include "vendor/rocm_backend.hpp"
 #elif defined(USE_LEVEL_ZERO)
 #include "vendor/lz_backend.hpp"
-#elif defined(USE_GEOPM)
-#include "vendor/geopm/geopm_backend.hpp"
+#elif  defined(USE_GEOPM_GPU)
+    #include "vendor/geopm/geopm_backend.hpp"
 #endif
 
-#if defined(USE_RAPL)
+#if defined(USE_GEOPM_CPU)
+#include "vendor/geopm/geopm_backend.hpp"
+#elif defined(USE_RAPL)
 #include "vendor/rapl_backend.hpp"
 #endif
+
 
 namespace gpu_backend {
     std::unique_ptr<GPUEnergyBackend> create_backend() {
@@ -21,7 +24,7 @@ namespace gpu_backend {
         return std::make_unique<amd::RocmBackend>();
     #elif defined(USE_LEVEL_ZERO)
         return std::make_unique<intel::LevelZeroBackend>();
-    #elif defined(USE_GEOPM)
+    #elif defined(USE_GEOPM_GPU)
         return std::make_unique<geopm_backend::GEOPMIntelGPU>();
     #else
     #error "No GPU energy backend defined"
@@ -34,7 +37,7 @@ namespace cpu_backend {
     std::unique_ptr<CPUEnergyBackend> create_backend() {
     #if defined(USE_RAPL)
         return std::make_unique<rapl::RAPLBackend>();
-    #elif defined(USE_GEOPM)
+    #elif defined(USE_GEOPM_CPU)
         return std::make_unique<geopm_backend::GEOPMCpu>();
     #else
     #warning "No CPU energy backend defined"

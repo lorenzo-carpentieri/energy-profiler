@@ -39,7 +39,7 @@ namespace geopm_backend {
     class GEOPMCpu final : public CPUEnergyBackend {
     public:
         void initialize(uint32_t cpu_socket) override{
-            handle_ = geopm_device_handle{cpu_socket, geopm_domain_e::GEOPM_DOMAIN_CPU};
+            handle_ = geopm_device_handle{cpu_socket, geopm_domain_e::GEOPM_DOMAIN_PACKAGE};
         }   
         void shutdown() override{
         }

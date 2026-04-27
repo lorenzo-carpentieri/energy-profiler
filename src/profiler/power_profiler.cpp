@@ -34,11 +34,11 @@ namespace profiler{
         : impl_(new Impl) {
 
         impl_->gpu_backend = gpu_backend::create_backend();
-        #if defined(USE_RAPL) || defined(USE_GEOPM)
+        #if defined(USE_RAPL) || defined(USE_GEOPM_CPU)
         impl_->cpu_backend = cpu_backend::create_backend();
         #endif
         impl_->gpu_backend->initialize(static_cast<uint32_t>(dev_id));
-        #if defined(USE_RAPL)
+        #if defined(USE_RAPL) || defined(USE_GEOPM_CPU)
         impl_->cpu_backend->initialize(static_cast<uint32_t>(host_id));
         #endif
         impl_->sampling_ms = sampling_rate_ms;
@@ -47,7 +47,7 @@ namespace profiler{
 
     PowerProfiler::~PowerProfiler() {
         impl_->gpu_backend->shutdown(); // shutdown gpu_backend
-        #if defined(USE_RAPL) || defined(USE_GEOPM)
+        #if defined(USE_RAPL) || defined(USE_GEOPM_CPU)
         impl_->cpu_backend->shutdown(); // shutdown gpu_backend
         #endif
         impl_.reset(); // destroy pointer to gpu_backend implementation
@@ -58,19 +58,19 @@ namespace profiler{
         impl_->running = true;
 
         impl_->start_dev_energy = impl_->gpu_backend->read_energy(); // start energy in uj
-        #if defined(USE_RAPL) || defined(USE_GEOPM)
+        #if defined(USE_RAPL) || defined(USE_GEOPM_CPU) 
         impl_->start_host_energy = impl_->cpu_backend->read_energy();
         #endif
         impl_->worker = std::thread([this]() {
             uint64_t timestamp=0;
             while (impl_->running) {
                 data_types::power_t power_uw = impl_->gpu_backend->read_power(); // read power in uw
-                #if defined(USE_RAPL) || defined(USE_GEOPM)
+                #if defined(USE_RAPL) || defined(USE_GEOPM_CPU)
                 data_types::power_t host_power_uw = impl_->cpu_backend->read_power(); // read host power in uw
                 #endif
                 std::tuple<data_types::timestamp_t, data_types::power_t> power_tuple = std::make_tuple(timestamp, power_uw);
                 power_trace_data.push_back(power_tuple); // Create (timestamp, power) tuple
-                #if defined(USE_RAPL) || defined(USE_GEOPM)
+                #if defined(USE_RAPL) || defined(USE_GEOPM_CPU)
                 std::tuple<data_types::timestamp_t, data_types::power_t> host_power_tuple = std::make_tuple(timestamp, host_power_uw);
                 host_power_trace.push_back(host_power_tuple); // Create (timestamp, host power) tuple
                 #endif
@@ -85,7 +85,7 @@ namespace profiler{
         if (impl_->worker.joinable()) {
             impl_->worker.join();
         }
-        #if defined(USE_RAPL) || defined(USE_GEOPM)
+        #if defined(USE_RAPL) || defined(USE_GEOPM_CPU)
         impl_->end_host_energy = impl_->cpu_backend->read_energy(); 
         #endif
         impl_->end_dev_energy = impl_->gpu_backend->read_energy(); // end energy in uj
@@ -118,6 +118,9 @@ namespace profiler{
         // Parse the tuple vector in order to remove consecutive power value that are equal.
         // In this way the tuple (t1, p1) and (t2, p2) will have p1 != p2 and in the interval of time [t1, t2] the device operate at power p1.
         data_types::power_trace_t parsed_data;
+        if (power_trace_data.empty()) {
+            return parsed_data;
+        }
         std::tuple<data_types::timestamp_t, data_types::power_t> last_power_tuple = power_trace_data.back(); // store the power trace data internally in the power_prof object
         
         
@@ -137,6 +140,9 @@ namespace profiler{
         // Parse the tuple vector in order to remove consecutive power value that are equal.
         // In this way the tuple (t1, p1) and (t2, p2) will have p1 != p2 and in the interval of time [t1, t2] the device operate at power p1.
         data_types::power_trace_t parsed_data;
+        if (host_power_trace.empty()) {
+            return parsed_data;
+        }
         std::tuple<data_types::timestamp_t, data_types::power_t> last_power_tuple = host_power_trace.back(); // store the power trace data internally in the power_prof object
         
         
